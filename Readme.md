@@ -1,5 +1,7 @@
 # 💱 LuceneQS To SQL
 
+[![Build Status](https://travis-ci.org/donflopez/lucene-to-sql-parser.svg?branch=master)](https://travis-ci.org/donflopez/lucene-to-sql-parser)
+
 This simple library is basically a grammar for [lalrpop](https://github.com/lalrpop/lalrpop) that transforms a query in the lucene query syntax to a sql where clause.
 
 ---
