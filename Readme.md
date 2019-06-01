@@ -1,4 +1,4 @@
-# LuceneQS To SQL
+# 💱 LuceneQS To SQL
 
 This simple library is basically a grammar for [lalrpop](https://github.com/lalrpop/lalrpop) that transforms a query in the lucene query syntax to a sql where clause.
 
@@ -27,7 +27,7 @@ field = 1 OR field like 'c%'
 
 TODO
 
-## Limitations
+## ❗️Limitations
 
 ### Bare queries
 
@@ -44,11 +44,11 @@ name = 'myvalue' OR description = 'myvalue' OR body = 'myvalue' OR summary = 'my
 
 You probably noticed that when you use `term:value` the translation is `term = 'value'` but in LQS would like `term like '%value%'`. I'm planning on changing it or leaving that configurable, I'd like to restrict that for perf reasons in some of my proyect but then the syntax translation is not correct and would make others not use it.
 
-### Not supported features (yet)
+### 🚫Not supported features (yet)
 
 There is a few things not supported that are going to be, but there are others that won't.
 
-- All boolean operators (will be supported)
-- Boosting
-- Proximity
-- Fuzziness
+- [All boolean operators (will be supported)](https://www.elastic.co/guide/en/elasticsearch/reference/7.1/query-dsl-query-string-query.html#_boolean_operators)
+- [Boosting](https://www.elastic.co/guide/en/elasticsearch/reference/7.1/query-dsl-query-string-query.html#_boosting)
+- [Proximity](https://www.elastic.co/guide/en/elasticsearch/reference/7.1/query-dsl-query-string-query.html#_proximity_searches)
+- [Fuzziness](https://www.elastic.co/guide/en/elasticsearch/reference/7.1/query-dsl-query-string-query.html#_fuzziness)
