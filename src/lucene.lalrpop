@@ -1,0 +1,98 @@
+use std::str::FromStr;
+
+grammar;
+
+match {
+	r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?" => Digits,
+	r"[a-zA-Z][\w_]*" => Enum,
+	"OR", "AND", "TO", r"AND\s+NOT", r"OR\s+NOT", "*" => Asterisk
+} else {
+	r"\d[\d\-.Z:]*" => Date,
+	r"[a-zA-Z\*][\w_\*]*" => WildEnum,
+	_
+}
+
+pub Expr: String = {
+	<l:Expr> <op:Logic> <r:Term> => format!("{} {} {}", <>),
+	<Term> => <>,
+	"(" <Expr> ")" => format!("({})", <>),
+}
+
+Term: String = {
+	<CleanStr> => <>.to_string(),
+	<Num> => <>.to_string(),
+	<f:Field> <t:Str> => format!("{} {}", <>),
+	<f:Field> <t:Num> => format!("{} = {}", <>),
+	<f:Field> <op:Op> <t:Num> => format!("{} {} {}", <>),
+	<f:Field> <op:Op> <t:CleanStr> => format!("{} {} {}", <>),
+	<f:Field> <op:Op> => format!("{} {}", <>).replace("###FIELD###", &f),
+	<f:Field> "(" <t:TermGroup> ")" => format!("({})", t.replace("###FIELD###", &f)),
+}
+
+TermGroup: String = {
+	"(" <TermGroup> ")" => <>.to_string(),
+	<t:TermGroup> <l:Logic> <v:Value> => if v.contains("%") {
+		format!("{} {} ###FIELD### like {}", t, l, v)
+	} else {
+		format!("{} {} ###FIELD### = {}", t, l, v)
+	},
+	<t:TermGroup> <l:Logic> <o:Op> <v:Value> => format!("{} {} ###FIELD### {} {}", t, l, o, v),
+	<Op> <Value> => format!("###FIELD### {} {}", <>),
+	<Value> => if <>.contains("%") {
+		format!("###FIELD### like {}", <>)
+	} else {
+		format!("###FIELD### = {}", <>)
+	},
+}
+
+Field: String = {
+	r"[a-zA-Z][\w_\-]*:" => <>[..(<>.len() - 1)].to_string(),
+}
+
+Str: String = {
+	<Enum> => format!("= '{}'", <>),
+	<WildEnum> => format!("like '{}'", <>.replace("*", "%").replace("?", "_")),
+	"\"" <Enum> "\"" => format!("= '{}'", <>),
+}
+
+CleanStr: String = {
+	<Enum> => format!("'{}'", <>),
+	<WildEnum> => format!("'{}'", <>.replace("*", "%").replace("?", "_")),
+	"\"" <Enum> "\"" => format!("'{}'", <>),
+}
+
+Num: String = {
+	<Digits> => <>.to_string()
+}
+
+Value: String = {
+	Num,
+	CleanStr,
+	"\"" <Date> "\"" => format!("'{}'", <>),
+}
+
+Op: String = {
+	">=" => <>.to_string(),
+	"<=" => <>.to_string(),
+	">" => <>.to_string(),
+	"<" => <>.to_string(),
+	"-" => "NOT".to_string(),
+	Range
+}
+
+Range: String = {
+	"[" <a:Asterisk> "TO" <v:Value> "]" => format!("<= {}", v),
+	"[" <v:Value> "TO" <a:Asterisk> "]" => format!(">= {}", v),
+	"[" <Value> "TO" <Value> "]" => format!("BETWEEN {} AND {}", <>),
+	"{" <a:Asterisk> "TO" <v:Value> "}" => format!("< {}", v),
+	"{" <v:Value> "TO" <a:Asterisk> "}" => format!("> {}", v),
+	"{" <Value> "TO" <Value> "}" => format!("> {} AND ###FIELD### < {}", <>),
+	"[" <Asterisk> "TO" <Asterisk> "]" => "like '%'".to_string(),
+}
+
+Logic: String = {
+	"AND" => <>.to_string(),
+	"OR" => <>.to_string(),
+	r"AND\s+NOT" => <>.trim().to_string(),
+	r"OR\s+NOT" => <>.trim().to_string(),
+}
